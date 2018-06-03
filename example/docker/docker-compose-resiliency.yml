@@ -1,0 +1,11 @@
+# Docker Compose overlay file to enable remote container debugging using IntelliJ
+# - Use this file as follows:
+#   docker-compose -f docker/docker-compose.yml -f docker/docker-compose-resiliency.yml up
+version: "2.4"
+
+services:
+  example:
+    volumes:
+      - "./agent:/agent"
+    environment:
+      JAVA_OPTS: "-javaagent:/agent/resiliency-fault-agent.jar=com.bamtech.*"

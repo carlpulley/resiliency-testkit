@@ -1,0 +1,13 @@
+# Docker Compose Definitions for local Developer Environments
+# - Use this file as follows:
+#   docker-compose -f docker/docker-compose.yml up
+version: "2.4"
+
+services:
+  example:
+    image: resiliency-example:latest
+    networks:
+      - external
+
+networks:
+  external:
