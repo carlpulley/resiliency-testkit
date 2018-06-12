@@ -35,9 +35,13 @@ abstract class ResiliencyTestkit extends FreeSpec with Matchers {
       })
       scanner.scan()
 
-      val results = generators.map(gen => Try(EvaluateGenExpr[Throwable](gen)))
+      val results = generators.map(gen => (gen, Try(EvaluateGenExpr[Throwable](gen)))).toVector
 
-      results.count(_.isFailure) shouldEqual 0
+      note(s"Found ${results.length} distinct @RandomException annotations")
+
+      withClue(results.filter(_._2.isFailure)) {
+        results.count(_._2.isFailure) shouldEqual 0
+      }
     }
 
     "RandomLatency" in {
@@ -51,9 +55,13 @@ abstract class ResiliencyTestkit extends FreeSpec with Matchers {
       })
       scanner.scan()
 
-      val results = generators.map(gen => Try(EvaluateGenExpr[FiniteDuration](gen)))
+      val results = generators.map(gen => (gen, Try(EvaluateGenExpr[FiniteDuration](gen)))).toVector
 
-      results.count(_.isFailure) shouldEqual 0
+      note(s"Found ${results.length} distinct @RandomLatency annotations")
+
+      withClue(results.filter(_._2.isFailure)) {
+        results.count(_._2.isFailure) shouldEqual 0
+      }
     }
 
 //    "RandomParameterValue" in {
@@ -64,7 +72,7 @@ abstract class ResiliencyTestkit extends FreeSpec with Matchers {
 //    }
 
     "RandomReturnValue" in {
-      val generators = mutable.HashMap.empty[Class[_], String]
+      val generators = mutable.HashSet.empty[(Class[_], String)]
       val scanner = new FastClasspathScanner
 
       scanner.matchClassesWithMethodAnnotation(classOf[RandomReturnValue], new MethodAnnotationMatchProcessor {
@@ -83,10 +91,14 @@ abstract class ResiliencyTestkit extends FreeSpec with Matchers {
 
       val results = generators.map {
         case (returnType, genExpr) =>
-          Try(EvaluateGenExpr(genExpr, returnType))
-      }
+          (genExpr, Try(EvaluateGenExpr(genExpr, returnType)))
+      }.toVector
 
-      results.count(_.isFailure) shouldEqual 0
+      note(s"Found ${results.length} distinct @RandomReturnValue annotations")
+
+      withClue(results.filter(_._2.isFailure)) {
+        results.count(_._2.isFailure) shouldEqual 0
+      }
     }
   }
 }

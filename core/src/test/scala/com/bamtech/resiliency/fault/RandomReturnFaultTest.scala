@@ -21,32 +21,51 @@ class RandomReturnFaultTest extends FreeSpec with Matchers with BeforeAndAfterAl
       ResiliencyFaultAgent.agentInstrumentation("com.bamtech.resiliency.fault.*").installOnByteBuddyAgent()
     }}
 
-  "RandomReturnValue" in {
-    val results = (0 until sampleSize).map { _ =>
-      testMethod()
+  "RandomReturnValue" - {
+    "with data return type" in {
+      val results = (0 until sampleSize).map { _ =>
+        testDataMethod()
+      }
+
+      results.count(_ == "Success") should be > 0
+      results.count(_ != "Success") should be > 0
+      forAll(results.filter(_ != "Success")) { value =>
+        value should fullyMatch regex "[0-9]*"
+      }
+      results.count(_ == "Success") + results.count(_ != "Success") shouldEqual sampleSize
     }
 
-    results.count(_ == "Success") shouldEqual ((sampleSize * noneFreq) / totalOptionFreq) +- errorDelta
-    forAll(results.filter(_ != "Success")) { value =>
-      value should fullyMatch regex "[0-9]*"
+    "with function return type" in {
+      val results = (0 until sampleSize).map { _ =>
+        testFunctionMethod()(())
+      }
+
+      results.count(_ == "Success") should be > 0
+      results.count(_ != "Success") should be > 0
+      forAll(results.filter(_ != "Success")) { value =>
+        value should fullyMatch regex "[0-9]*"
+      }
+      results.count(_ == "Success") + results.count(_ != "Success") shouldEqual sampleSize
     }
-    results.count(_ != "Success") shouldEqual ((sampleSize * someFreq) / totalOptionFreq) +- errorDelta
   }
 }
 
 object RandomReturnFaultTest {
-  val sampleSize: Int = 100
-  val errorDelta: Int = 6
-  val noneFreq: Int = 1
-  val someFreq: Int = 9
-  val totalOptionFreq: Int = noneFreq + someFreq
-
+  val sampleSize: Int = 200
   val valueGen: Gen[Option[String]] = {
     Gen.option(Gen.numStr)
   }
+  val functionGen: Gen[Option[Unit => String]] = {
+    Gen.option(Gen.numStr.map(num => _ => num))
+  }
 
   @RandomReturnValue(generator = "com.bamtech.resiliency.fault.RandomReturnFaultTest.valueGen")
-  def testMethod(): String = {
+  def testDataMethod(): String = {
     "Success"
+  }
+
+  @RandomReturnValue(generator = "com.bamtech.resiliency.fault.RandomReturnFaultTest.functionGen")
+  def testFunctionMethod(): Unit => String = {
+    _ => "Success"
   }
 }

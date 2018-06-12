@@ -2,10 +2,10 @@
 
 package com.bamtech.resiliency
 
-//import java.io.File
+import java.io.File
 import java.lang.instrument.Instrumentation
 
-//import net.bytebuddy.agent.ByteBuddyAgent
+import net.bytebuddy.agent.ByteBuddyAgent
 import net.bytebuddy.agent.builder.{AgentBuilder, ResettableClassFileTransformer}
 import net.bytebuddy.description.`type`.TypeDescription
 import net.bytebuddy.matcher.ElementMatchers
@@ -18,24 +18,27 @@ import com.bamtech.resiliency.util.ValueDiscard
   */
 object ResiliencyFaultAgent {
 
+  // $COVERAGE-OFF$
+
   /**
     * Attach the given agent to the supplied process ID.
     *
-    * @param args agent jar file and a process ID
+    * @param args whitelist regular expression of packages to instrument and a process ID
     */
-//  def main(args: Array[String]): Unit = {
-//    if (args.length != 2 + 1) {
-//      println(s"Usage: ${args(0)} AGENT_JAR PROCESS_ID")
-//    } else {
-//      val agentJar = new File(args(1))
-//      val processId = args(2).toInt
-//
-//      assert(agentJar.getName.startsWith("resiliency-fault-agent") && agentJar.getName.endsWith(".jar"))
-//      assert(agentJar.exists() && agentJar.canRead)
-//
-//      ByteBuddyAgent.attach(agentJar, processId.toString)
-//    }
-//  }
+  def main(args: Array[String]): Unit = {
+    if (args.length != 2) {
+      println(s"Usage: resiliency-fault-agent.jar PACKAGE_REGEX PROCESS_ID")
+    } else {
+      val agentJar = new File(this.getClass.getProtectionDomain.getCodeSource.getLocation.getPath)
+      val processId = args(1).toInt
+      val regex = args(0)
+
+      assert(agentJar.getName.startsWith("resiliency-fault-agent") && agentJar.getName.endsWith(".jar"))
+      assert(agentJar.exists() && agentJar.canRead)
+
+      ByteBuddyAgent.attach(agentJar, processId.toString, regex)
+    }
+  }
 
   /**
     * If the agent is attached to a JVM on the start, then this method is invoked before {@code main} method is called.
@@ -61,12 +64,14 @@ object ResiliencyFaultAgent {
     }
   }
 
+  // $COVERAGE-ON$
+
   private[resiliency] def agentInstrumentation(regex: String): AgentBuilder = {
     import ElementMatchers._
 
     new AgentBuilder.Default()
-//      .`with`(AgentBuilder.Listener.StreamWriting.toSystemError)
-//      .`with`(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+//      .`with`(AgentBuilder.Listener.StreamWriting.toSystemOut)
+      .`with`(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
 //      .`with`(AgentBuilder.TypeStrategy.Default.REDEFINE)
 //      .disableClassFormatChanges()
       .`type`(nameMatches[TypeDescription](regex))

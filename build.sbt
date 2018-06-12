@@ -64,7 +64,8 @@ lazy val core = project.in(file("core"))
       art.copy(`classifier` = Some("assembly"))
     },
     addArtifact(artifact in (Compile, assembly), assembly),
-    coverageMinimum := 0
+    test in assembly := {}, // FIXME:
+    coverageMinimum := 100
   )
 
 lazy val faultAgent = project
@@ -81,15 +82,15 @@ lazy val testkit = project.in(file("testkit"))
   .settings(
     name := "resiliency-testkit",
     libraryDependencies ++= Seq(
-      fastpath % Test,
-      scalatest % Test,
-      scalacheck % Test
+      fastpath,
+      scalatest,
+      scalacheck
     ),
     coverageMinimum := 0
   )
 
 lazy val example = project.in(file("example"))
-  .dependsOn(annotation, testkit % "test->test")
+  .dependsOn(annotation, testkit % "compile->test")
   .enablePlugins(JavaAppPackaging)
   .settings(CommonProject.settings)
   .settings(

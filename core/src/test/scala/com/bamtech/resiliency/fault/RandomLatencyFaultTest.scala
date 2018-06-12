@@ -42,25 +42,21 @@ class RandomLatencyFaultTest
       }
     }
 
-    results.count(_.isSuccess) shouldEqual ((sampleSize * noneFreq) / totalOptionFreq) +- errorDelta
+    results.count(_.isSuccess) should be > 0
+    results.count(_.isFailure) should be > 0
     forAll(results.filter(_.isFailure)) { failure =>
       inside(failure) {
         case Failure(cause) =>
           cause shouldBe an[TestFailedDueToTimeoutException]
       }
     }
-    results.count(_.isFailure) shouldEqual ((sampleSize * someFreq) / totalOptionFreq) +- errorDelta
+    results.count(_.isSuccess) + results.count(_.isFailure) shouldEqual sampleSize
   }
 }
 
 object RandomLatencyFaultTest {
-  val sampleSize: Int = 100
-  val errorDelta: Int = 10
-  val noneFreq: Int = 1
-  val someFreq: Int = 9
-  val totalOptionFreq: Int = noneFreq + someFreq
+  val sampleSize: Int = 200
   val sleepPeriod: FiniteDuration = 200.milliseconds
-
   val latencyGen: Gen[Option[FiniteDuration]] = {
     Gen.option(Gen.const(sleepPeriod))
   }

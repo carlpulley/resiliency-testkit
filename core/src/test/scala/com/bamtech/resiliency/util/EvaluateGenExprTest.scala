@@ -10,34 +10,72 @@ class EvaluateGenExprTest extends FreeSpec with Matchers {
   import EvaluateGenExprTest._
 
   "EvaluateGenExpr" - {
-    "using val reference" in {
-      val generator: Gen[Option[Int]] = EvaluateGenExpr[Int]("com.bamtech.resiliency.util.EvaluateGenExprTest.valRef")
-      val results = (0 until sampleSize).map(_ => generator.sample).collect {
-        case Some(value) => value
+    "type parameter" - {
+      "using val reference" in {
+        val generator: Gen[Option[Int]] = EvaluateGenExpr[Int]("com.bamtech.resiliency.util.EvaluateGenExprTest.valRef")
+        val results = (0 until sampleSize).map(_ => generator.sample).collect {
+          case Some(value) => value
+        }
+
+        results.count(_.isDefined) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+        results.count(_.exists(_ > 0)) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
       }
 
-      results.count(_.isDefined) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
-      results.count(_.exists(_ > 0)) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+      "using simple Scala expression" in {
+        val generator: Gen[Option[String]] = EvaluateGenExpr[String](simpleExpr)
+        val results = (0 until sampleSize).map(_ => generator.sample).collect {
+          case Some(value) => value
+        }
+
+        results.count(_.isDefined) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+        results.count(_.exists(_.matches("[a-zA-Z0-9]*"))) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+      }
+
+      "using complex Scala expression" in {
+        val generator: Gen[Option[String]] = EvaluateGenExpr[String](complexExpr)
+        val results = (0 until sampleSize).map(_ => generator.sample).collect {
+          case Some(value) => value
+        }
+
+        results.count(_.isDefined) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+        results.count(_.exists(_.matches("[a-zA-Z0-9]*"))) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+      }
     }
 
-    "using simple Scala expression" in {
-      val generator: Gen[Option[String]] = EvaluateGenExpr[String](simpleExpr)
-      val results = (0 until sampleSize).map(_ => generator.sample).collect {
-        case Some(value) => value
+    "class argument" - {
+      "using val reference" in {
+        val generator: Gen[Option[_]] =
+          EvaluateGenExpr("com.bamtech.resiliency.util.EvaluateGenExprTest.valRef", classOf[Integer])
+        val results = (0 until sampleSize).map(_ => generator.sample).collect {
+          case Some(value) => value
+        }
+
+        results.count(_.isDefined) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+        results.count(_.exists(_.asInstanceOf[Integer] > 0)) shouldEqual
+          (sampleSize * someFreq / totalFreq) +- errorDelta
       }
 
-      results.count(_.isDefined) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
-      results.count(_.exists(_.matches("[a-zA-Z0-9]*"))) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
-    }
+      "using simple Scala expression" in {
+        val generator: Gen[Option[_]] = EvaluateGenExpr(simpleExpr, classOf[String])
+        val results = (0 until sampleSize).map(_ => generator.sample).collect {
+          case Some(value) => value
+        }
 
-    "using complex Scala expression" in {
-      val generator: Gen[Option[String]] = EvaluateGenExpr[String](complexExpr)
-      val results = (0 until sampleSize).map(_ => generator.sample).collect {
-        case Some(value) => value
+        results.count(_.isDefined) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+        results.count(_.exists(_.asInstanceOf[String].matches("[a-zA-Z0-9]*"))) shouldEqual
+          (sampleSize * someFreq / totalFreq) +- errorDelta
       }
 
-      results.count(_.isDefined) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
-      results.count(_.exists(_.matches("[a-zA-Z0-9]*"))) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+      "using complex Scala expression" in {
+        val generator: Gen[Option[_]] = EvaluateGenExpr(complexExpr, classOf[String])
+        val results = (0 until sampleSize).map(_ => generator.sample).collect {
+          case Some(value) => value
+        }
+
+        results.count(_.isDefined) shouldEqual (sampleSize * someFreq / totalFreq) +- errorDelta
+        results.count(_.exists(_.asInstanceOf[String].matches("[a-zA-Z0-9]*"))) shouldEqual
+          (sampleSize * someFreq / totalFreq) +- errorDelta
+      }
     }
   }
 }

@@ -5,9 +5,11 @@ scalacOptions ++= Seq("-deprecation", "-Xlint", "-unchecked", "-language:_", "-X
 resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
 resolvers += "jgit-repo" at "http://download.eclipse.org/jgit/maven"
 
+val asm: ModuleID = "org.ow2.asm" % "asm" % "6.0"
+val asmTree: ModuleID = "org.ow2.asm" % "asm-tree" % "6.0"
 val xml: ModuleID = "xml-apis" % "xml-apis" % "1.3.04"
 
-dependencyOverrides ++= Set(xml)
+dependencyOverrides ++= Set(asm, asmTree, xml)
 
 //addSbtPlugin("com.codacy" % "sbt-codacy-coverage" % "1.3.11")
 addSbtPlugin("com.dwijnand" % "sbt-travisci" % "1.1.1")
