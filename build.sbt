@@ -34,6 +34,7 @@ lazy val core = project.in(file("core"))
       FindBugs.annotations,
       Scala.compiler,
       scalacheck,
+      scalalogging,
       scalatest % Test
     ),
     assemblyJarName in assembly := s"resiliency-fault-agent-${version.value}.jar",

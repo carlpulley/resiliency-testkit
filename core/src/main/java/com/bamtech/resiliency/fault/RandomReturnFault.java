@@ -53,7 +53,7 @@ class RandomReturnFaultImpl {
       String genExpr = method.getDeclaredAnnotation(RandomReturnValue.class).generator();
       Gen<Option<Object>> gen = EvaluateGenExpr.<Object>apply(genExpr);
       Option<Option<Object>> result = gen.sample();
-
+System.out.println(String.format("DEBUGGY: %s", result));
       if (result.isDefined() && result.get().isDefined() && returnType.isInstance(result.get().get())) {
         value = result.get().get();
       }

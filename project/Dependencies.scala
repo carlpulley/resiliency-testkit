@@ -25,5 +25,6 @@ object Dependencies {
 
   val fastpath: ModuleID = "io.github.lukehutch" % "fast-classpath-scanner" % "2.21"
   val scalacheck: ModuleID = "org.scalacheck" %% "scalacheck" % "1.14.0"
+  val scalalogging: ModuleID = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
   val scalatest: ModuleID = "org.scalatest" %% "scalatest" % "3.0.5"
 }

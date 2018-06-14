@@ -9,6 +9,9 @@ import net.bytebuddy.agent.ByteBuddyAgent
 import net.bytebuddy.agent.builder.{AgentBuilder, ResettableClassFileTransformer}
 import net.bytebuddy.description.`type`.TypeDescription
 import net.bytebuddy.matcher.ElementMatchers
+import com.typesafe.scalalogging.Logger
+import net.bytebuddy.dynamic.DynamicType
+import net.bytebuddy.utility.JavaModule
 
 import com.bamtech.resiliency.fault.{RandomExceptionFault, RandomLatencyFault, RandomParameterFault, RandomReturnFault}
 import com.bamtech.resiliency.util.ValueDiscard
@@ -19,6 +22,8 @@ import com.bamtech.resiliency.util.ValueDiscard
 object ResiliencyFaultAgent {
 
   // $COVERAGE-OFF$
+
+  private val log = Logger("ResiliencyFaultAgent")
 
   /**
     * Attach the given agent to the supplied process ID.
@@ -64,16 +69,12 @@ object ResiliencyFaultAgent {
     }
   }
 
-  // $COVERAGE-ON$
-
   private[resiliency] def agentInstrumentation(regex: String): AgentBuilder = {
     import ElementMatchers._
 
     new AgentBuilder.Default()
-//      .`with`(AgentBuilder.Listener.StreamWriting.toSystemOut)
-      .`with`(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-//      .`with`(AgentBuilder.TypeStrategy.Default.REDEFINE)
-//      .disableClassFormatChanges()
+      .`with`(new AgentBuilder.Listener.WithErrorsOnly(logListener))
+      .`with`(new AgentBuilder.Listener.WithTransformationsOnly(logListener))
       .`type`(nameMatches[TypeDescription](regex))
       .transform(new RandomExceptionFault)
       .asDecorator()
@@ -87,4 +88,28 @@ object ResiliencyFaultAgent {
       .transform(new RandomReturnFault)
       .asDecorator()
   }
+
+  private def logListener: AgentBuilder.Listener = new AgentBuilder.Listener.Adapter {
+    override def onError(
+      typeName: String,
+      classLoader: ClassLoader,
+      module: JavaModule,
+      loaded: Boolean,
+      throwable: Throwable
+    ): Unit = {
+      log.error(s"$typeName [module=$module; loaded=$loaded]", throwable)
+    }
+
+    override def onTransformation(
+      typeDescription: TypeDescription,
+      classLoader: ClassLoader,
+      module: JavaModule,
+      loaded: Boolean,
+      dynamicType: DynamicType
+    ): Unit = {
+      log.info(s"Transformation $typeDescription [module=$module; loaded=$loaded; dynamicType=$dynamicType]")
+    }
+  }
+
+  // $COVERAGE-ON$
 }
